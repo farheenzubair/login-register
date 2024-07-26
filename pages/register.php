@@ -3,6 +3,29 @@ include '../database.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") 
 {
+    // Check for duplicate username or email
+    if (isset($_POST['check_duplicate'])) {
+        $username = $_POST['username'];
+        $email = $_POST['email'];
+
+        $database = Database::getInstance();
+        $existingUser = $database->getUserByUsername($username);
+        $existingEmail = $database->getUserByEmail($email);
+
+        $response = array('username_exists' => false, 'email_exists' => false);
+
+        if ($existingUser) {
+            $response['username_exists'] = true;
+        }
+        if ($existingEmail) {
+            $response['email_exists'] = true;
+        }
+
+        echo json_encode($response);
+        exit();
+    }
+
+    // Handle the registration process
     $username = $_POST['username'];
     $email = $_POST['email'];
     $password = $_POST['password'];
@@ -11,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
     $database = Database::getInstance();
     $conn = $database->getConnection();
 
-// Check if username or email already exists
+    // Check if username or email already exists
     $existingUser = $database->getUserByUsername($username);
     $existingEmail = $database->getUserByEmail($email);
 
@@ -32,11 +55,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST")
     $stmt = $conn->prepare($sql);
     $stmt->bind_param("sss", $username, $email, $password_hash);
 
-    if ($stmt->execute()) 
-    {
+    if ($stmt->execute()) {
         echo "Registration successful!";
-    } else 
-    {
+    } else {
         echo "Registration failed!";
     }
 
